@@ -77,31 +77,27 @@ pip install Flask transformers sentencepiece protobuf
 
 ---
 
-## 🧠 How the Code Works (Line-by-Line Explanation)
+## 🧠 How the Code Works (Step-by-Step Flow)
 
-### 1. The Backend (`app.py`)
-This file handles the local server, file saving, and the AI brain.
+The application works in three main chronological steps: listening to your voice, saving the text, and summarizing the meeting.
 
-* **`AutoTokenizer` & `AutoModelForSeq2SeqLM`:** We bypass generic pipelines and directly load `t5-small`. The tokenizer turns English words into numbers (tokens) the AI can understand, and the model does the actual thinking.
-* **`generate_ai_gist(text)` Function:** 
-  * *Regex Cleaning:* Uses `re.sub` to strip timestamps (e.g., `[10:30 AM]`) out of the text so the AI doesn't get confused by numbers.
-  * *Prompt Formatting:* Prepends `"summarize: "` to the text, which is a strict requirement for the T5 model to know what task to perform.
-  * *Generation:* Uses `model.generate()` to create the summary. We use `num_beams=4` (to give the AI 4 different "paths" of thought to find the best summary) and `early_stopping=True`.
-* **API Routes (`@app.route`)**:
-  * `/api/sessions/start`: Generates a timestamped `.txt` file in the `sessions_db` folder.
-  * `/api/sessions/<filename>` (PUT): Receives the real-time text from the frontend and appends (`mode='a'`) or overwrites (`mode='w'`) the local text file.
+### Step 1: Taking Voice Input (Frontend - `index.html`)
+The application does not use heavy Python audio libraries to listen to your microphone. Instead, it uses the browser's built-in **Web Speech API** for maximum efficiency.
+* `recognition.continuous = true`: Keeps the microphone listening even if you pause speaking.
+* `recognition.interimResults = true`: This is the secret to **zero-lag real-time typing**. It tells the browser to display "guesses" of what you are saying before you even finish the sentence, injecting them instantly into the `<textarea>`.
+* **The Handoff:** Once a sentence is finalized by the API (`isFinal`), the JavaScript attaches a timestamp (e.g., `[12:00 PM]`) and uses `fetch()` to send that sentence directly to the Python backend.
 
-### 2. The Frontend (`templates/index.html`)
-This file contains the UI, the microphone logic, and the connection to the backend.
+### Step 2: Saving the Text (Backend - `app.py`)
+Python (Flask) acts as the secure vault for your data. 
+* **The API Route:** When the JavaScript sends the finalized sentence, it hits the `@app.route('/api/sessions/<filename>', methods=['PUT'])` endpoint.
+* **File Writing:** Python opens the specific `.txt` file inside the `sessions_db/` folder and appends (`mode='a'`) the new sentence to it. This ensures your data is saved securely to your local hard drive paragraph by paragraph, preventing data loss if you accidentally close the browser.
 
-* **CSS / Glassmorphism:** Uses CSS variables (`:root`) to define a clean green/white color palette. `backdrop-filter: blur(20px)` is used on the bottom control bar to give it a modern, frosted-glass effect.
-* **Web Speech API (`SpeechRecognition`)**:
-  * `recognition.continuous = true`: Prevents the microphone from turning off after you pause speaking.
-  * `recognition.interimResults = true`: **Crucial for real-time typing.** This tells the browser to send "guesses" of what you are saying before you finish the sentence.
-* **The `onresult` Event Loop**:
-  * It splits results into two categories: `isFinal` (sentence is finished) and `interimTranscript` (live speaking).
-  * `interimTranscript` words are instantly injected into the `<textarea>` so the user sees zero lag.
-  * When `isFinal` triggers, the code attaches a timestamp (e.g., `[12:00 PM]`), locks the text into `savedContentBeforeLive`, and immediately makes a `fetch()` PUT request to save that specific sentence to the backend database.
+### Step 3: AI Summarization (Backend - `app.py`)
+When you click "Smart Gist", Python wakes up the local AI to process your saved text.
+* **Loading the Brain:** At the top of `app.py`, `AutoTokenizer` and `AutoModelForSeq2SeqLM` bypass generic pipelines to directly load the `t5-small` model into your computer's memory.
+* **Cleaning the Data:** Inside `generate_ai_gist(text)`, Python uses Regex (`re.sub`) to strip the timestamps out of your document so the AI doesn't get confused by numbers.
+* **The Prompt:** Python prepends `"summarize: "` to the text, which is a strict requirement for the T5 model to know what task to perform.
+* **Generation:** `model.generate()` is called with `num_beams=4`. This forces the AI to explore 4 different logical "paths" of thought simultaneously to find the absolute best executive summary. It then sends this summary back to the frontend to be displayed in a modal!
 
 ---
 
