@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>smart ai notes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Ultra-Clean Light Theme */
+            --bg-gradient: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+            --bg-sidebar: rgba(255, 255, 255, 0.7);
+            
+            --chatx-dark: #0b3d21;       /* Deep Forest Green for headings & buttons */
+            --chatx-dark-hover: #082b17;
+            --chatx-lime: #65a30d;       /* Green accent for logo */
+            --chatx-soft: #e8f5e9;       /* Soft badge background */
+            
+            --text-main: #4b5563;        /* Soft gray for readable paragraphs */
+            --text-title: #0b3d21;       /* Sharp green for headings */
+            --text-white: #ffffff;
+            
+            --border-light: rgba(11, 61, 33, 0.08);
+            
+            --radius-pill: 50px;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            
+            --shadow-soft: 0 4px 20px rgba(11, 61, 33, 0.04);
+            --shadow-glass: 0 10px 40px -10px rgba(11, 61, 33, 0.12);
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            margin: 0; 
+            overflow: hidden; 
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            height: 100vh;
+        }
+
+        /* --- Landing Page (Curtain Overlay) --- */
+        .hero-curtain {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-gradient);
+            transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.8s ease;
+            overflow: hidden;
+        }
+
+        .hero-curtain.hidden {
+            transform: translateY(-100vh);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 60px 40px;
+            max-width: 800px;
+        }
+
+        header { position: absolute; top: 0; left: 0; width: 100%; padding: 30px 5%; box-sizing: border-box; display: flex; z-index: 10; }
+        
+        .logo { font-size: 24px; font-weight: 800; letter-spacing: -1px; color: var(--chatx-dark); }
+        .logo span { color: var(--chatx-lime); }
+        .logo i { font-style: normal; font-weight: 600; opacity: 0.8; }
+
+        .hero-badge { display: inline-block; background: var(--chatx-soft); color: var(--chatx-dark); padding: 8px 20px; border-radius: var(--radius-pill); font-weight: 700; font-size: 14px; margin-bottom: 24px;}
+        .hero-title { font-size: 64px; font-weight: 800; line-height: 1.1; margin: 0 0 24px 0; color: var(--text-title); letter-spacing: -2px; }
+        .hero-subtitle { font-size: 18px; color: var(--text-main); margin-bottom: 40px; line-height: 1.6; max-width: 650px; margin-left: auto; margin-right: auto;}
+        
+        .btn-hero { background-color: var(--chatx-dark); color: var(--text-white); padding: 18px 40px; font-size: 16px; border-radius: var(--radius-pill); border: none; font-weight: 700; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 10px 20px rgba(11, 61, 33, 0.15); display: flex; align-items: center; gap: 8px; margin: 0 auto; }
+        .btn-hero:hover { background-color: var(--chatx-dark-hover); transform: translateY(-3px); box-shadow: 0 15px 25px rgba(11, 61, 33, 0.2); }
+
+        /* --- App Interface (Dashboard) --- */
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            background: var(--bg-gradient);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background-color: var(--bg-sidebar);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 24px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        
+        .btn-new-session {
+            background-color: var(--chatx-dark);
+            color: var(--text-white);
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius-pill);
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(11, 61, 33, 0.1);
+        }
+        .btn-new-session:hover { background-color: var(--chatx-dark-hover); transform: scale(0.98); }
+
+        .sidebar-title { font-size: 12px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; }
+        
+        #session-list { flex-grow: 1; overflow-y: auto; margin-bottom: 20px; }
+        .session-item {
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all 0.2s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .session-item:hover { background-color: rgba(255,255,255,0.8); box-shadow: var(--shadow-soft); }
+        .session-item.active { background-color: var(--chatx-soft); color: var(--chatx-dark); }
+
+        .sidebar-actions { display: flex; gap: 10px; border-top: 1px solid var(--border-light); padding-top: 20px; }
+        .sidebar-actions button {
+            flex: 1; padding: 12px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid var(--border-light); background: transparent; color: var(--chatx-dark); transition: all 0.2s;
+        }
+        .sidebar-actions button:hover { border-color: var(--chatx-dark); background: var(--chatx-soft); }
+
+        /* Main Content Area */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 100vh;
+        }
+
+        .main-header {
+            padding: 24px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 5;
+            position: sticky;
+            top: 0;
+            border-bottom: 1px solid var(--border-light);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+        }
+        .main-header h2 { margin: 0; font-size: 20px; font-weight: 800; color: var(--chatx-dark); }
+        .status-badge { background: var(--chatx-soft); color: var(--chatx-dark); padding: 6px 16px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; }
+
+        /* The Editor */
+        .editor-container {
+            flex-grow: 1;
+            padding: 20px 50px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+        #editor {
+            width: 100%;
+            max-width: 800px;
+            height: 100%;
+            background: transparent;
+            border: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 18px;
+            line-height: 1.8;
+            color: var(--text-title);
+            padding-bottom: 160px; 
+        }
+        #editor:focus { outline: none; }
+        #editor::placeholder { color: #9ca3af; }
+
+        /* Floating Bottom Control Bar */
+        .bottom-controls-wrapper {
+            position: absolute;
+            bottom: 40px; left: 0; width: 100%;
+            display: flex; justify-content: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .control-box {
+            padding: 12px;
+            border-radius: var(--radius-pill);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-glass);
+        }
+
+        .control-box button {
+            padding: 14px 28px;
+            border-radius: var(--radius-pill);
+            border: none;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .control-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-record { background: transparent; border: 1px solid var(--chatx-dark); color: var(--chatx-dark); }
+        .btn-record:not(:disabled):hover { background-color: var(--chatx-soft); }
+        .btn-record.recording { background-color: #fef2f2; border-color: #ef4444; color: #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); }
+        
+        .btn-gist { background-color: var(--chatx-lime); color: var(--text-white); }
+        .btn-gist:not(:disabled):hover { background-color: #4d7c0f; }
+        
+        .btn-save { background-color: var(--chatx-dark); color: var(--text-white); }
+        .btn-save:not(:disabled):hover { background-color: var(--chatx-dark-hover); }
+        
+        .btn-end { background-color: transparent; color: var(--text-main); }
+        .btn-end:not(:disabled):hover { color: var(--chatx-dark); background: rgba(0,0,0,0.05);}
+
+        /* Custom Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        
+        .modal-box { background: white; padding: 40px; border-radius: var(--radius-lg); width: 90%; max-width: 500px; text-align: left; transform: scale(0.95); transition: all 0.3s; box-shadow: var(--shadow-glass); border: 1px solid var(--border-light); }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        
+        .modal-title { font-size: 22px; font-weight: 800; color: var(--chatx-dark); margin: 0 0 12px 0; }
+        .modal-desc { font-size: 15px; color: var(--text-main); margin-bottom: 28px; line-height: 1.6; }
+        .modal-input { width: 100%; padding: 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-size: 16px; margin-bottom: 28px; box-sizing: border-box; font-family: inherit; background: transparent; color: var(--text-title); transition: all 0.2s;}
+        .modal-input:focus { outline: none; border-color: var(--chatx-dark); background: var(--chatx-soft); }
+        
+        .modal-buttons { display: flex; gap: 12px; justify-content: flex-end; }
+        .modal-buttons button { padding: 12px 30px; border-radius: var(--radius-pill); font-weight: 700; font-size: 14px; border: none; cursor: pointer; font-family: inherit; transition: 0.2s;}
+        .btn-modal-cancel { background: var(--chatx-soft); color: var(--chatx-dark); }
+        .btn-modal-confirm { background: var(--chatx-dark); color: white; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <!-- Landing Page (Curtain) -->
+    <div class="hero-curtain" id="hero-curtain">
+        <header>
+            <div class="logo">smart<span> ai</span> <i>notes</i></div>
+        </header>
+        
+        <div class="hero-content">
+            <div class="hero-badge">✨ Seamless Voice-to-Text</div>
+            <h1 class="hero-title">Your AI-Powered <br>Workspace</h1>
+            <p class="hero-subtitle">Dictate notes, edit effortlessly, and manage your sessions in a clean, distraction-free environment designed for maximum productivity.</p>
+            <button class="btn-hero" onclick="revealDashboard()">Launch App &rarr;</button>
+        </div>
+    </div>
+
+    <!-- App Interface -->
+    <div class="app-layout">
+        
+        <aside class="sidebar">
+            <div class="logo" style="margin-bottom: 30px;">smart<span> ai</span> <i>notes</i></div>
+            
+            <button class="btn-new-session" onclick="startSession()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New Session
+            </button>
+            
+            <div class="sidebar-title">Recent Notes</div>
+            <div id="session-list"></div>
+            
+            <div class="sidebar-actions">
+                <button onclick="renameSession()">Rename</button>
+                <button onclick="deleteSession()">Delete</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="main-header">
+                <h2 id="editor-label">Welcome. Start a new session.</h2>
+                <span id="status-label" class="status-badge">Ready</span>
+            </div>
+            
+            <div class="editor-container">
+                <textarea id="editor" placeholder="Your transcribed text will appear here..."></textarea>
+            </div>
+
+            <div class="bottom-controls-wrapper">
+                <div class="control-box">
+                    <button id="btn-record" class="btn-record" onclick="toggleRecording()" disabled>
+                        🎙️ Record Audio
+                    </button>
+                    <button id="btn-gist" class="btn-gist" onclick="summarizeSession()" disabled>
+                        ✨ Smart Gist
+                    </button>
+                    <button id="btn-save" class="btn-save" onclick="saveModifications()" disabled>
+                        💾 Save Note
+                    </button>
+                    <button id="btn-end" class="btn-end" onclick="endSession()" disabled>
+                        End Session
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 id="modal-title" class="modal-title">Title</h2>
+            <div id="modal-desc" class="modal-desc">Description</div>
+            <input type="text" id="modal-input" class="modal-input" style="display: none;">
+            <div class="modal-buttons">
+                <button id="modal-cancel" class="btn-modal-cancel" style="display: none;">Cancel</button>
+                <button id="modal-confirm" class="btn-modal-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Curtain Logic ---
+        function revealDashboard() {
+            const curtain = document.getElementById('hero-curtain');
+            curtain.classList.add('hidden');
+            setTimeout(() => { curtain.style.display = 'none'; }, 800);
+        }
+
+        document.getElementById('hero-curtain').addEventListener('wheel', (e) => {
+            if (e.deltaY > 0) revealDashboard();
+        });
+
+        // --- Custom Modal System ---
+        function showModal({ title, desc, type = 'alert', confirmText = 'OK', cancelText = 'Cancel' }) {
+            return new Promise((resolve) => {
+                const overlay = document.getElementById('custom-modal');
+                const inputEl = document.getElementById('modal-input');
+                const btnConfirm = document.getElementById('modal-confirm');
+                const btnCancel = document.getElementById('modal-cancel');
+                const descEl = document.getElementById('modal-desc');
+
+                document.getElementById('modal-title').textContent = title;
+                descEl.innerHTML = desc; 
+                btnConfirm.textContent = confirmText;
+                btnCancel.textContent = cancelText;
+
+                inputEl.style.display = type === 'prompt' ? 'block' : 'none';
+                btnCancel.style.display = (type === 'confirm' || type === 'prompt') ? 'block' : 'none';
+                inputEl.value = '';
+
+                overlay.classList.add('active');
+                if(type === 'prompt') inputEl.focus();
+
+                const closeAndResolve = (value) => {
+                    overlay.classList.remove('active');
+                    btnConfirm.onclick = null;
+                    btnCancel.onclick = null;
+                    resolve(value);
+                };
+
+                btnConfirm.onclick = () => closeAndResolve(type === 'prompt' ? inputEl.value : true);
+                btnCancel.onclick = () => closeAndResolve(type === 'prompt' ? null : false);
+            });
+        }
+
+        // --- Core Application Logic ---
+        let currentLoadedFile = null;
+        let activeSessionFile = null;
+        let isRecording = false;
+        let savedContentBeforeLive = ""; // Tracks content before live stream starts
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        // ENABLE REAL-TIME RECOGNITION
+        recognition.continuous = true;
+        recognition.interimResults = true; 
+        recognition.lang = 'en-US';
+
+        fetchSessions();
+
+        async function fetchSessions() {
+            const res = await fetch('/api/sessions');
+            const files = await res.json();
+            const listDiv = document.getElementById('session-list');
+            listDiv.innerHTML = '';
+            files.forEach(file => {
+                const div = document.createElement('div');
+                div.className = 'session-item';
+                div.textContent = file.replace('.txt', ''); 
+                if(file === currentLoadedFile) div.classList.add('active');
+                div.onclick = () => loadSession(file);
+                listDiv.appendChild(div);
+            });
+        }
+
+        async function loadSession(filename) {
+            currentLoadedFile = filename;
+            document.getElementById('editor-label').textContent = filename.replace('.txt', '');
+            const res = await fetch(`/api/sessions/${filename}`);
+            const data = await res.json();
+            document.getElementById('editor').value = data.content;
+            savedContentBeforeLive = data.content;
+
+            document.getElementById('btn-record').disabled = false;
+            document.getElementById('btn-gist').disabled = false;
+            document.getElementById('btn-save').disabled = false;
+            document.getElementById('btn-end').disabled = false;
+            
+            fetchSessions(); 
+        }
+
+        async function summarizeSession() {
+            if (!currentLoadedFile) return;
+            const statusLabel = document.getElementById('status-label');
+            const originalText = statusLabel.textContent;
+            statusLabel.textContent = "AI Summarizing...";
+            
+            try {
+                await saveModifications(true); // Auto-save before summarizing
+                const res = await fetch(`/api/sessions/${currentLoadedFile}/summarize`);
+                const data = await res.json();
+                statusLabel.textContent = originalText;
+                showModal({ title: "Smart Gist", desc: data.summary, confirmText: "Close" });
+            } catch (err) {
+                statusLabel.textContent = "Error";
+            }
+        }
+
+        async function saveModifications(silent = false) {
+            if (!currentLoadedFile) {
+                if (!silent) showModal({ title: "Oops!", desc: "Select a session to save edits.", type: "alert" });
+                return;
+            }
+            const content = document.getElementById('editor').value;
+            await fetch(`/api/sessions/${currentLoadedFile}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({content: content, mode: 'w'})
+            });
+            savedContentBeforeLive = content;
+            if (!silent) {
+                showModal({ title: "Saved!", desc: "Your text has been updated successfully.", type: "alert" });
+            }
+        }
+
+        async function deleteSession() {
+            if (!currentLoadedFile) return showModal({ title: "Action Required", desc: "Select a session from the sidebar to delete.", type: "alert" });
+            
+            const confirmed = await showModal({ 
+                title: "Delete Note?", 
+                desc: `Are you sure you want to delete this session?`, 
+                type: "confirm", confirmText: "Delete", cancelText: "Cancel" 
+            });
+
+            if (confirmed) {
+                await fetch(`/api/sessions/${currentLoadedFile}`, { method: 'DELETE' });
+                document.getElementById('editor').value = '';
+                document.getElementById('editor-label').textContent = 'Select a session';
+                currentLoadedFile = null;
+                fetchSessions();
+            }
+        }
+
+        async function renameSession() {
+            if (!currentLoadedFile) return showModal({ title: "Action Required", desc: "Select a session to rename.", type: "alert" });
+            
+            const newName = await showModal({ 
+                title: "Rename Note", 
+                desc: "Enter a new name:", 
+                type: "prompt", confirmText: "Rename" 
+            });
+
+            if (newName && newName.trim() !== "") {
+                const res = await fetch(`/api/sessions/${currentLoadedFile}/rename`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({new_name: newName})
+                });
+                const data = await res.json();
+                loadSession(data.new_filename);
+            }
+        }
+
+        async function startSession() {
+            revealDashboard(); 
+            const res = await fetch('/api/sessions/start', { method: 'POST' });
+            const data = await res.json();
+            activeSessionFile = data.filename;
+            
+            const statusLabel = document.getElementById('status-label');
+            statusLabel.textContent = "Live Meeting";
+            statusLabel.style.background = "var(--chatx-soft)";
+            statusLabel.style.color = "var(--chatx-dark)";
+            
+            loadSession(activeSessionFile);
+        }
+
+        function toggleRecording() {
+            const btnRecord = document.getElementById('btn-record');
+            const statusLabel = document.getElementById('status-label');
+
+            if (isRecording) {
+                isRecording = false;
+                recognition.stop();
+            } else {
+                isRecording = true;
+                savedContentBeforeLive = document.getElementById('editor').value;
+                recognition.start();
+                btnRecord.innerHTML = "🛑 Stop Listening";
+                btnRecord.classList.add("recording");
+                statusLabel.textContent = "Listening...";
+                statusLabel.style.background = "#fef2f2";
+                statusLabel.style.color = "#ef4444";
+            }
+        }
+
+        // --- REAL-TIME WORD BY WORD TRANSCRIBING ---
+        recognition.onresult = async function(event) {
+            let newFinalText = '';
+            let interimTranscript = ''; 
+
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    const time = new Date().toLocaleTimeString('en-US', { hour12: true });
+                    newFinalText += `[${time}] ${event.results[i][0].transcript.trim()}\n\n`;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+
+            if (currentLoadedFile) {
+                const editor = document.getElementById('editor');
+                
+                // Show saved text + newly finished text + live typing words
+                editor.value = savedContentBeforeLive + newFinalText + interimTranscript;
+                editor.scrollTop = editor.scrollHeight; 
+                
+                // Save to backend ONLY when a sentence is finalized
+                if (newFinalText.length > 0) {
+                    savedContentBeforeLive += newFinalText; 
+                    await fetch(`/api/sessions/${currentLoadedFile}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({content: newFinalText, mode: 'a'})
+                    });
+                }
+            }
+        };
+
+        recognition.onend = function() {
+            if (isRecording) {
+                recognition.start();
+                return;
+            }
+            const btnRecord = document.getElementById('btn-record');
+            btnRecord.innerHTML = "🎙️ Record Audio";
+            btnRecord.classList.remove("recording");
+            
+            const statusLabel = document.getElementById('status-label');
+            statusLabel.textContent = "Meeting Paused";
+            statusLabel.style.background = "var(--chatx-soft)";
+            statusLabel.style.color = "var(--chatx-dark)";
+        };
+
+        recognition.onerror = function(event) {
+            if (event.error === 'no-speech' || event.error === 'network') return;
+            showModal({ title: "Microphone Error", desc: event.error, type: "alert" });
+        };
+
+        function endSession() {
+            activeSessionFile = null;
+            if(isRecording) {
+                isRecording = false;
+                recognition.stop();
+            }
+            
+            const statusLabel = document.getElementById('status-label');
+            statusLabel.textContent = "Session Ended";
+            statusLabel.style.background = "transparent";
+            statusLabel.style.color = "var(--text-main)";
+            
+            document.getElementById('btn-record').disabled = true;
+            document.getElementById('btn-gist').disabled = true;
+            document.getElementById('btn-end').disabled = true;
+            document.getElementById('btn-save').disabled = true;
+        }
+    </script>
+</body>
+</html>
