@@ -42,7 +42,7 @@ Because this app is designed to be highly optimized, we use the CPU-only version
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/YOUR-USERNAME/smart-ai-notes.git
+git clone https://github.com/Chitra-ai-coder/smart-ai-notes.git
 cd smart-ai-notes
 ```
 
